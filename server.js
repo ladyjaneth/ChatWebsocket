@@ -27,13 +27,28 @@ httpServer.listen(PORT, ()=>{
  io.on('connection',socket=>{
     console.log('Un cliente se ha conectado'); 
     //cuando ya se ha conectado emitir los mensajes que hayan habido 
-    socket.emit('messages',mensajes);
-    socket.on('new-message', data=>{
-        mensajes.push(data)
+    socket.emit('messages',mensajes);//backend al fronend
+    socket.on('new-message', data=>{ //recibiendo el mensaje que le envian del fronend
+        mensajes.push(data)//guardando el mensaje
         io.sockets.emit('messages', mensajes)
-
     })
+
+    const productos = contenedor.getAll();//trae todos los productos
+    socket.emit('productos', productos);//emitiendo los productos a las demás personas del backend al fronend
+
+    socket.on('new-producto', async data=>{//recibiendo el producto
+        await contenedor.save(data);
+        io.sockets.emit('productos',  productos);
+    })
+
+
 })
+
+//pinta los productos 
+app.get('/productos',async (req, res)=>{
+    const productos = await contenedor.getAll();
+    res.render('productos', { productos });
+});
 
 app.get('/', async(req, res)=>{
     const productos = await contenedor.getAll(); //trae todos los productos
